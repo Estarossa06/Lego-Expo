@@ -2,7 +2,8 @@ import type { PropsWithChildren, ReactNode } from 'react';
 import { SymbolView } from 'expo-symbols';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
-import type { ColorValue } from 'react-native';
+import type { ColorValue, ViewStyle } from 'react-native';
+import { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { Product, StoreOrder } from './types';
 
@@ -38,11 +39,30 @@ export function Icon({ name, color = colors.ink, size = 20 }: { name: IconName; 
   return <SymbolView name={iconNames[name]} tintColor={color} size={size} />;
 }
 
+export function ProductImage({ uri, style, label }: { uri: string; style: ViewStyle; label: string }) {
+  const [failedUri, setFailedUri] = useState<string | null>(null);
+  const failed = failedUri === uri;
+
+  return (
+    <View accessibilityLabel={failed ? `Imagen no disponible: ${label}` : label} style={[style, styles.imageFrame]}>
+      {failed ? (
+        <View style={styles.imageFallback}><Icon name="box" color={colors.blue} size={25} /></View>
+      ) : (
+        <Image source={{ uri }} resizeMode="contain" onError={() => setFailedUri(uri)} style={StyleSheet.absoluteFill} />
+      )}
+    </View>
+  );
+}
+
 export function Screen({ children }: PropsWithChildren) {
   const { width } = useWindowDimensions();
   return (
     <SafeAreaView edges={['top']} style={styles.safe}>
-      <ScrollView contentContainerStyle={[styles.screen, { paddingHorizontal: width > 720 ? 32 : 18 }]} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        contentInsetAdjustmentBehavior="never"
+        contentContainerStyle={[styles.screen, { paddingHorizontal: width > 720 ? 32 : 18 }]}
+        keyboardShouldPersistTaps="handled"
+      >
         <View style={[styles.content, width > 960 && styles.contentWide]}>{children}</View>
       </ScrollView>
     </SafeAreaView>
@@ -79,7 +99,7 @@ export function ProductCard({ product, onPress, compact = false }: {
     <Animated.View entering={FadeInDown.duration(220)}>
       <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => [styles.productCard, compact && styles.productCompact, pressed && styles.productPressed]}>
         <View style={[styles.productImageWrap, compact && styles.productImageCompact]}>
-          <Image source={{ uri: product.imageUrl }} style={styles.productImage} resizeMode="contain" />
+          <ProductImage uri={product.imageUrl} label={product.name} style={styles.productImage} />
           <View style={styles.setNumber}><Text style={styles.setNumberText}>{product.id}</Text></View>
         </View>
         <View style={styles.productInfo}>
@@ -216,6 +236,8 @@ const styles = StyleSheet.create({
   productImageWrap: { width: 132, minHeight: 148, backgroundColor: colors.paleYellow, padding: 10, position: 'relative' },
   productImageCompact: { width: '100%', aspectRatio: 1, minHeight: 0 },
   productImage: { width: '100%', height: '100%' },
+  imageFrame: { overflow: 'hidden' },
+  imageFallback: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.paleBlue },
   setNumber: { position: 'absolute', top: 8, left: 8, backgroundColor: colors.paper, borderRadius: 5, paddingHorizontal: 7, paddingVertical: 4 },
   setNumberText: { color: colors.ink, fontSize: 9, fontWeight: '900' },
   productInfo: { flex: 1, minWidth: 0, padding: 14, justifyContent: 'center', gap: 6 },

@@ -1,7 +1,7 @@
 import * as Network from 'expo-network';
 import { useSQLiteContext } from 'expo-sqlite';
 import * as Crypto from 'expo-crypto';
-import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import type { PropsWithChildren } from 'react';
 import { fetchProducts, sendOrder } from './api';
 import { getDeviceId, readCart, readOrders, readProducts, saveProducts } from './database';
@@ -13,6 +13,7 @@ type StoreContextValue = {
   orders: StoreOrder[];
   online: boolean;
   serverAvailable: boolean;
+  catalogError: string | null;
   loading: boolean;
   addToCart: (product: Product, quantity?: number) => Promise<void>;
   setCartQuantity: (productId: string, quantity: number) => Promise<void>;
@@ -30,7 +31,9 @@ export function StoreProvider({ children }: PropsWithChildren) {
   const [orders, setOrders] = useState<StoreOrder[]>([]);
   const [online, setOnline] = useState(false);
   const [serverAvailable, setServerAvailable] = useState(false);
+  const [catalogError, setCatalogError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const syncing = useRef(false);
 
   const refresh = useCallback(async () => {
     const [nextProducts, nextCart, nextOrders] = await Promise.all([
@@ -44,10 +47,17 @@ export function StoreProvider({ children }: PropsWithChildren) {
   }, [db]);
 
   const syncCatalog = useCallback(async () => {
-    const latest = await fetchProducts();
-    await saveProducts(db, latest);
-    setServerAvailable(true);
-    await refresh();
+    try {
+      const latest = await fetchProducts();
+      await saveProducts(db, latest);
+      setServerAvailable(true);
+      setCatalogError(null);
+      await refresh();
+    } catch (reason) {
+      setServerAvailable(false);
+      setCatalogError(reason instanceof Error ? reason.message : 'No se pudo actualizar el catálogo.');
+      throw reason;
+    }
   }, [db, refresh]);
 
   const syncOrder = useCallback(async (id: string) => {
@@ -109,12 +119,16 @@ export function StoreProvider({ children }: PropsWithChildren) {
   }, [db, syncOrder]);
 
   const syncWhenOnline = useCallback(async () => {
+    if (syncing.current) return;
+    syncing.current = true;
     try {
       await syncCatalog();
+      await syncPending();
     } catch {
-      setServerAvailable(false);
+      // El catálogo local sigue disponible cuando falla la red o el API.
+    } finally {
+      syncing.current = false;
     }
-    await syncPending();
   }, [syncCatalog, syncPending]);
 
   useEffect(() => {
@@ -131,7 +145,7 @@ export function StoreProvider({ children }: PropsWithChildren) {
       const state = await Network.getNetworkStateAsync();
       const connected = Boolean(state.isConnected && state.isInternetReachable !== false);
       if (active) setOnline(connected);
-      if (connected) await syncWhenOnline();
+      await syncWhenOnline();
     })();
 
     return () => {
@@ -216,7 +230,7 @@ export function StoreProvider({ children }: PropsWithChildren) {
   };
 
   return (
-    <StoreContext.Provider value={{ products, cart, orders, online, serverAvailable, loading, addToCart, setCartQuantity, removeFromCart, placeOrder, refresh }}>
+    <StoreContext.Provider value={{ products, cart, orders, online, serverAvailable, catalogError, loading, addToCart, setCartQuantity, removeFromCart, placeOrder, refresh }}>
       {children}
     </StoreContext.Provider>
   );

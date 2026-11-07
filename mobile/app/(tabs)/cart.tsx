@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
-import { Image, Pressable, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { useStore } from '../../src/store';
-import { ActionButton, colors, EmptyState, Icon, Money, PageHeader, QuantityControl, Screen, SectionTitle } from '../../src/ui';
+import { ActionButton, colors, EmptyState, Icon, Money, PageHeader, ProductImage, QuantityControl, Screen, SectionTitle } from '../../src/ui';
 
 export default function CartScreen() {
   const { cart, setCartQuantity, removeFromCart } = useStore();
@@ -13,7 +13,7 @@ export default function CartScreen() {
       {!cart.length ? <EmptyState title="Tu carrito está vacío" detail="Explora el catálogo y agrega tus sets favoritos." /> : <>
         {cart.map((item) => (
           <View key={item.id} style={{ flexDirection: 'row', gap: 12, paddingVertical: 12, borderBottomWidth: 1, borderColor: colors.line }}>
-            <Image source={{ uri: item.imageUrl }} resizeMode="contain" style={{ width: 82, height: 82, backgroundColor: colors.canvas, borderRadius: 5 }} />
+            <ProductImage uri={item.imageUrl} label={item.name} style={{ width: 82, height: 82, backgroundColor: colors.canvas, borderRadius: 5 }} />
             <View style={{ flex: 1, justifyContent: 'space-between', gap: 8 }}>
               <View>
                 <Text style={{ color: colors.muted, fontSize: 10, fontWeight: '700' }}>{item.id} · {item.category}</Text>

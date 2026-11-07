@@ -4,7 +4,7 @@ import { useStore } from '../../src/store';
 import { ActionButton, colors, LoadingState, Notice, PageHeader, ProductCard, Screen, SectionTitle } from '../../src/ui';
 
 export default function HomeScreen() {
-  const { products, online, serverAvailable, loading } = useStore();
+  const { products, online, serverAvailable, catalogError, loading } = useStore();
   const featured = products.slice(0, 3);
 
   return (
@@ -21,7 +21,7 @@ export default function HomeScreen() {
         </Pressable>
       </View>
       <Notice tone={serverAvailable ? 'success' : online ? 'info' : 'error'}>
-        {serverAvailable ? 'Inventario actualizado desde la tienda.' : online ? 'Mostrando el catálogo guardado; el servidor no responde.' : 'Sin conexión. El catálogo guardado sigue disponible.'}
+        {serverAvailable ? 'Inventario actualizado desde la tienda.' : catalogError ?? (online ? 'Mostrando el catálogo guardado; el servidor no responde.' : 'Sin conexión. El catálogo guardado sigue disponible.')}
       </Notice>
       <SectionTitle action={<Pressable accessibilityRole="button" onPress={() => router.push('/(tabs)/catalog')}><Text style={{ color: colors.blue, fontWeight: '900' }}>Ver catálogo</Text></Pressable>}>Para empezar</SectionTitle>
       {loading && !products.length ? <LoadingState /> : featured.map((product) => (

@@ -1,8 +1,8 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Image, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { useStore } from '../../src/store';
-import { ActionButton, colors, LoadingState, Money, Notice, PageHeader, QuantityControl, Screen } from '../../src/ui';
+import { ActionButton, colors, LoadingState, Money, Notice, PageHeader, ProductImage, QuantityControl, Screen } from '../../src/ui';
 
 export default function ProductScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -21,7 +21,7 @@ export default function ProductScreen() {
     <Screen>
       <PageHeader label={product.category} title={product.name} />
       <View style={{ backgroundColor: colors.canvas, borderRadius: 8, aspectRatio: 1, padding: 18 }}>
-        <Image source={{ uri: product.imageUrl }} resizeMode="contain" style={{ width: '100%', height: '100%' }} />
+        <ProductImage uri={product.imageUrl} label={product.name} style={{ width: '100%', height: '100%' }} />
       </View>
       <Text style={{ color: colors.muted, fontSize: 14, lineHeight: 22 }}>{product.description}</Text>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>

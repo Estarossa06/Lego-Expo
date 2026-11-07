@@ -1,9 +1,9 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Image, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { shareInvoice } from '../../src/invoice';
 import { useStore } from '../../src/store';
-import { ActionButton, colors, LoadingState, Money, Notice, OrderStatus, PageHeader, Screen } from '../../src/ui';
+import { ActionButton, colors, LoadingState, Money, Notice, OrderStatus, PageHeader, ProductImage, Screen } from '../../src/ui';
 
 export default function OrderScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -23,7 +23,7 @@ export default function OrderScreen() {
       <View style={{ gap: 12 }}>
         {order.items.map((item) => (
           <View key={item.productId} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <Image source={{ uri: item.imageUrl }} resizeMode="contain" style={{ width: 58, height: 58, backgroundColor: colors.canvas, borderRadius: 4 }} />
+            <ProductImage uri={item.imageUrl} label={item.name} style={{ width: 58, height: 58, backgroundColor: colors.canvas, borderRadius: 4 }} />
             <View style={{ flex: 1 }}><Text style={{ color: colors.ink, fontWeight: '800' }}>{item.name}</Text><Text style={{ color: colors.muted, fontSize: 12 }}>Cantidad: {item.quantity}</Text></View>
             <Money cents={item.priceCents * item.quantity} />
           </View>

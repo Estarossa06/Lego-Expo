@@ -5,7 +5,7 @@ import { useStore } from '../../src/store';
 import { colors, EmptyState, LoadingState, Notice, PageHeader, ProductCard, Screen, SearchField } from '../../src/ui';
 
 export default function CatalogScreen() {
-  const { products, loading, serverAvailable, online } = useStore();
+  const { products, loading, serverAvailable, catalogError, online } = useStore();
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('Todo');
   const categories = ['Todo', ...new Set(products.map((product) => product.category))];
@@ -18,14 +18,20 @@ export default function CatalogScreen() {
     <Screen>
       <PageHeader label="Sets y novedades" title="Catálogo" />
       <SearchField value={query} onChangeText={setQuery} placeholder="Buscar sets o número" />
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 2 }}>
+      <ScrollView
+        horizontal
+        style={{ width: '100%' }}
+        contentInsetAdjustmentBehavior="never"
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ gap: 8, paddingVertical: 2 }}
+      >
         {categories.map((item) => (
           <Pressable accessibilityRole="button" accessibilityState={{ selected: category === item }} key={item} onPress={() => setCategory(item)} style={{ backgroundColor: category === item ? colors.ink : colors.canvas, paddingHorizontal: 14, paddingVertical: 9, borderRadius: 20 }}>
             <Text style={{ color: category === item ? colors.paper : colors.ink, fontSize: 12, fontWeight: '800' }}>{item}</Text>
           </Pressable>
         ))}
       </ScrollView>
-      {!serverAvailable ? <Notice tone={online ? 'info' : 'error'}>{online ? 'Se muestra la última disponibilidad guardada.' : 'Sin conexión: los cambios de inventario se comprobarán al comprar.'}</Notice> : null}
+      {!serverAvailable ? <Notice tone={online ? 'info' : 'error'}>{catalogError ?? (online ? 'Se muestra la última disponibilidad guardada.' : 'Sin conexión: los cambios de inventario se comprobarán al comprar.')}</Notice> : null}
       <Text style={{ color: colors.muted, fontSize: 12, fontWeight: '700' }}>{filtered.length} {filtered.length === 1 ? 'set' : 'sets'}</Text>
       {loading && !products.length ? <LoadingState /> : filtered.length ? filtered.map((product) => (
         <ProductCard key={product.id} product={product} onPress={() => router.push({ pathname: '/product/[id]', params: { id: product.id } })} />
