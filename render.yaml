@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: lego-store-api
+    runtime: node
+    rootDir: api
+    plan: starter
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_SSL
+        value: "false"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: lego-store-db
+          property: connectionString
+
+databases:
+  - name: lego-store-db
+    databaseName: lego_store
+    user: lego_store
+    plan: basic-256mb

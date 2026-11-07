@@ -1,0 +1,58 @@
+import type { Product } from './types';
+
+export const catalogSeed: Product[] = [
+  {
+    id: '31145',
+    name: 'Dragón rojo',
+    description: 'Un dragón articulado para construir y exhibir.',
+    priceCents: 999,
+    stock: 12,
+    imageUrl: 'https://images.brickset.com/sets/images/31145-1.jpg',
+    category: 'Creator',
+  },
+  {
+    id: '60401',
+    name: 'Apisonadora',
+    description: 'Vehículo de construcción con rodillo giratorio.',
+    priceCents: 999,
+    stock: 8,
+    imageUrl: 'https://images.brickset.com/sets/images/60401-1.jpg',
+    category: 'City',
+  },
+  {
+    id: '75375',
+    name: 'Halcón Milenario',
+    description: 'Modelo para exhibir de la nave más famosa de la galaxia.',
+    priceCents: 8499,
+    stock: 4,
+    imageUrl: 'https://images.brickset.com/sets/images/75375-1.jpg',
+    category: 'Star Wars',
+  },
+  {
+    id: '42151',
+    name: 'Bugatti Bolide',
+    description: 'Coche de carreras Technic con dirección y motor.',
+    priceCents: 4999,
+    stock: 6,
+    imageUrl: 'https://images.brickset.com/sets/images/42151-1.jpg',
+    category: 'Technic',
+  },
+  {
+    id: '43249',
+    name: 'Stitch',
+    description: 'Figura articulada con orejas móviles y cono de helado.',
+    priceCents: 6499,
+    stock: 5,
+    imageUrl: 'https://images.brickset.com/sets/images/43249-1.jpg',
+    category: 'Disney',
+  },
+  {
+    id: '71426',
+    name: 'Planta Piraña',
+    description: 'Figura articulada de Super Mario para exhibir.',
+    priceCents: 6499,
+    stock: 3,
+    imageUrl: 'https://images.brickset.com/sets/images/71426-1.jpg',
+    category: 'Super Mario',
+  },
+];

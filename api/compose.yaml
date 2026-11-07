@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: lego_store
+      POSTGRES_USER: lego
+      POSTGRES_PASSWORD: lego_local
+    ports:
+      - "5432:5432"
+    volumes:
+      - lego_store_data:/var/lib/postgresql/data
+
+volumes:
+  lego_store_data:
