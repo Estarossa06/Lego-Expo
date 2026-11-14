@@ -1,12 +1,24 @@
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
 import { useStore } from '../../src/store';
-import { ActionButton, colors, EmptyState, Icon, Money, PageHeader, ProductImage, QuantityControl, Screen, SectionTitle } from '../../src/ui';
+import { ActionButton, colors, EmptyState, Icon, Money, Notice, PageHeader, ProductImage, QuantityControl, Screen, SectionTitle } from '../../src/ui';
 
 export default function CartScreen() {
   const { cart, setCartQuantity, removeFromCart } = useStore();
+  const [error, setError] = useState('');
   const subtotal = cart.reduce((sum, item) => sum + item.priceCents * item.quantity, 0);
   const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const overStock = cart.find((item) => item.quantity > item.stock);
+
+  const updateQuantity = async (productId: string, quantity: number) => {
+    setError('');
+    try {
+      await setCartQuantity(productId, quantity);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'No se pudo actualizar la cantidad.');
+    }
+  };
 
   return (
     <Screen>
@@ -18,6 +30,12 @@ export default function CartScreen() {
         </>
       ) : (
         <>
+          {error ? <Notice tone="error">{error}</Notice> : null}
+          {overStock ? (
+            <Notice tone="error">
+              {overStock.name}: solicitas {overStock.quantity}, pero solo hay {overStock.stock}. Ajusta la cantidad antes de comprar.
+            </Notice>
+          ) : null}
           <View style={styles.cartList}>
             {cart.map((item) => (
               <View key={item.id} style={styles.cartItem}>
@@ -37,7 +55,11 @@ export default function CartScreen() {
                   <View style={styles.itemFooter}>
                     <View style={styles.quantityBlock}>
                       <Text style={styles.unitPrice}><Money cents={item.priceCents} /> <Text style={styles.unitLabel}>por set</Text></Text>
-                      <QuantityControl quantity={item.quantity} onChange={(value) => void setCartQuantity(item.id, value)} />
+                      <QuantityControl
+                        quantity={item.quantity}
+                        max={Math.min(99, item.stock)}
+                        onChange={(value) => void updateQuantity(item.id, value)}
+                      />
                     </View>
                     <Money cents={item.priceCents * item.quantity} />
                   </View>
@@ -53,7 +75,12 @@ export default function CartScreen() {
             <View style={styles.totalRow}><Text style={styles.totalText}>Subtotal</Text><Money cents={subtotal} large /></View>
             <Text style={styles.paymentNote}>Pago de demostración. No se solicitan datos bancarios.</Text>
           </View>
-          <ActionButton label="Continuar con la compra" icon="arrow" onPress={() => router.push('/checkout')} />
+          <ActionButton
+            label={overStock ? 'Ajusta el stock antes de comprar' : 'Continuar con la compra'}
+            icon="arrow"
+            disabled={Boolean(overStock)}
+            onPress={() => router.push('/checkout')}
+          />
         </>
       )}
     </Screen>

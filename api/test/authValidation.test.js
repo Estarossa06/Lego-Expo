@@ -70,12 +70,12 @@ test('permite crear una cuenta admin solo con el código configurado en el servi
     email: 'ada@example.com',
     password: 'secure pass 123',
     role: 'admin',
-    adminInvitationCode: '1234',
+    adminInvitationCode: '12345678',
   };
   assert.equal(validateRegistrationInput(developmentInput, { NODE_ENV: 'development' }).value.role, 'admin');
   assert.equal(validateRegistrationInput(developmentInput, {
     NODE_ENV: 'production',
-    ADMIN_REGISTRATION_CODE: '1234',
+    ADMIN_REGISTRATION_CODE: '12345678',
   }).status, 403);
 });
 

@@ -33,7 +33,7 @@ export default function CheckoutScreen() {
     setError('');
     try {
       const id = await placeOrder(clean);
-      router.replace({ pathname: '/order/[id]', params: { id } });
+      router.replace({ pathname: '/order/[id]', params: { id, autoInvoice: 'true' } });
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'No se pudo registrar el pedido.');
     } finally {

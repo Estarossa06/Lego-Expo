@@ -22,6 +22,8 @@ export default function ProductScreen() {
     return <Screen><EmptyState title="Set no disponible" detail="Este producto no está en el catálogo local." /><ActionButton label="Volver al catálogo" secondary onPress={() => router.replace('/(tabs)/catalog')} /></Screen>;
   }
 
+  const inCart = cart.find((item) => item.id === product.id)?.quantity ?? 0;
+  const remainingStock = Math.max(0, product.stock - inCart);
   const imageWidth = Math.min(width - 32, 500);
   const addProduct = async () => {
     setAdding(true);
@@ -69,7 +71,8 @@ export default function ProductScreen() {
           <Text style={styles.purchaseLabel}>Cantidad</Text>
           <QuantityControl
             quantity={quantity}
-            onChange={(value) => setQuantity(Math.max(1, Math.min(Math.max(product.stock, 1), 99, value)))}
+            max={Math.max(1, Math.min(99, remainingStock))}
+            onChange={(value) => setQuantity(Math.max(1, Math.min(Math.max(remainingStock, 1), 99, value)))}
           />
         </View>
         <View style={styles.totalRow}>
@@ -78,8 +81,8 @@ export default function ProductScreen() {
         </View>
         {message ? <Notice tone={message.tone}>{message.text}</Notice> : null}
         <ActionButton
-          label={product.stock ? 'Agregar al carrito' : 'Sin existencias'}
-          disabled={product.stock === 0}
+          label={remainingStock > 0 ? 'Agregar al carrito' : product.stock > 0 ? 'Stock agregado al carrito' : 'Sin existencias'}
+          disabled={remainingStock === 0}
           icon="cart"
           loading={adding}
           onPress={() => void addProduct()}

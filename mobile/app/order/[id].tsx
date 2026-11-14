@@ -1,16 +1,25 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
-import { Text, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Platform, Text, View } from 'react-native';
 import { shareInvoice } from '../../src/invoice';
 import { useStore } from '../../src/store';
 import { ActionButton, colors, EmptyState, LoadingState, Money, Notice, OrderStatus, PageHeader, ProductImage, Screen, SectionTitle, StoreHeader } from '../../src/ui';
 
 export default function OrderScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, autoInvoice } = useLocalSearchParams<{ id: string; autoInvoice?: string }>();
   const { orders, cart, loading } = useStore();
   const order = orders.find((item) => item.id === id);
   const [error, setError] = useState('');
+  const autoInvoiceStarted = useRef(false);
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+  useEffect(() => {
+    if (autoInvoice !== 'true' || order?.status !== 'completed' || autoInvoiceStarted.current) return;
+    autoInvoiceStarted.current = true;
+    void shareInvoice(order).catch((reason) => {
+      setError(reason instanceof Error ? reason.message : 'No se pudo generar la factura.');
+    });
+  }, [autoInvoice, order]);
 
   if (!order && loading) return <Screen><LoadingState label="Cargando pedido…" /></Screen>;
   if (!order) return <Screen><EmptyState title="No encontramos este pedido" detail="No aparece en los pedidos guardados en este dispositivo." /><ActionButton label="Volver a la tienda" secondary onPress={() => router.replace('/')} /></Screen>;
@@ -52,7 +61,15 @@ export default function OrderScreen() {
         <Text style={styles.customerText}>{order.customer.address}</Text>
       </View>
 
-      {order.status === 'completed' ? <ActionButton label="Descargar factura PDF" onPress={() => void shareInvoice(order).catch(() => setError('No se pudo generar la factura.'))} /> : null}
+      {order.status === 'completed' ? (
+        <>
+          {Platform.OS === 'web' ? <Notice>En la ventana de impresión, elige “Guardar como PDF”.</Notice> : null}
+          <ActionButton
+            label={Platform.OS === 'web' ? 'Volver a generar factura PDF' : 'Descargar factura PDF'}
+            onPress={() => void shareInvoice(order).catch((reason) => setError(reason instanceof Error ? reason.message : 'No se pudo generar la factura.'))}
+          />
+        </>
+      ) : null}
       {error ? <Notice tone="error">{error}</Notice> : null}
       <ActionButton label="Volver a la tienda" icon="back" secondary onPress={() => router.replace('/')} />
     </Screen>

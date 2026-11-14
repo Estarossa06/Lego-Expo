@@ -215,9 +215,30 @@ export function StoreProvider({ children }: PropsWithChildren) {
               item.imageUrl,
             );
           }
+          for (const item of order.items) {
+            await db.runAsync(
+              'DELETE FROM cart WHERE owner_user_id = ? AND product_id = ? AND quantity <= ?',
+              user.id,
+              item.productId,
+              item.quantity,
+            );
+            await db.runAsync(
+              'UPDATE cart SET quantity = quantity - ? WHERE owner_user_id = ? AND product_id = ? AND quantity > ?',
+              item.quantity,
+              user.id,
+              item.productId,
+              item.quantity,
+            );
+          }
         }
       });
-      if (order.status === 'completed') await syncCatalog();
+      if (order.status === 'completed') {
+        try {
+          await syncCatalog();
+        } catch {
+          // syncCatalog records the refresh failure without changing the confirmed order.
+        }
+      }
     } catch (reason) {
       const error = reason as Error & { status?: number };
       if (error.status === 401 || error.status === 403) {
@@ -281,10 +302,26 @@ export function StoreProvider({ children }: PropsWithChildren) {
 
   const addToCart = async (product: Product, quantity = 1) => {
     if (!user) throw new Error('Inicia sesión antes de agregar productos al carrito.');
-    if (product.stock < 1) throw new Error('Este producto no tiene existencias.');
+    if (!Number.isInteger(quantity) || quantity < 1 || quantity > 99) {
+      throw new Error('La cantidad debe ser un entero entre 1 y 99.');
+    }
+    const inventory = await db.getFirstAsync<{ stock: number }>(
+      'SELECT stock FROM products WHERE id = ?',
+      product.id,
+    );
+    if (!inventory || inventory.stock < 1) throw new Error('Este producto no tiene existencias.');
+    const current = await db.getFirstAsync<{ quantity: number }>(
+      'SELECT quantity FROM cart WHERE owner_user_id = ? AND product_id = ?',
+      user.id,
+      product.id,
+    );
+    const nextQuantity = (current?.quantity ?? 0) + quantity;
+    if (nextQuantity > inventory.stock || nextQuantity > 99) {
+      throw new Error(`Solo hay ${inventory.stock} unidades disponibles; ya tienes ${current?.quantity ?? 0} en tu carrito.`);
+    }
     await db.runAsync(
       `INSERT INTO cart (owner_user_id, product_id, quantity) VALUES (?, ?, ?)
-       ON CONFLICT(owner_user_id, product_id) DO UPDATE SET quantity = MIN(99, quantity + excluded.quantity)`,
+       ON CONFLICT(owner_user_id, product_id) DO UPDATE SET quantity = quantity + excluded.quantity`,
       user.id,
       product.id,
       quantity,
@@ -298,8 +335,18 @@ export function StoreProvider({ children }: PropsWithChildren) {
       await removeFromCart(productId);
       return;
     }
+    if (!Number.isInteger(quantity) || quantity > 99) {
+      throw new Error('La cantidad debe ser un entero entre 1 y 99.');
+    }
+    const inventory = await db.getFirstAsync<{ stock: number }>(
+      'SELECT stock FROM products WHERE id = ?',
+      productId,
+    );
+    if (!inventory || quantity > inventory.stock) {
+      throw new Error(`Solo hay ${inventory?.stock ?? 0} unidades disponibles.`);
+    }
     await db.runAsync(
-      'UPDATE cart SET quantity = MIN(99, ?) WHERE owner_user_id = ? AND product_id = ?',
+      'UPDATE cart SET quantity = ? WHERE owner_user_id = ? AND product_id = ?',
       quantity,
       user.id,
       productId,
@@ -315,10 +362,16 @@ export function StoreProvider({ children }: PropsWithChildren) {
 
   const placeOrder = async (customer: Customer) => {
     if (!user) throw new Error('Inicia sesión antes de confirmar una compra.');
-    if (!cart.length) throw new Error('El carrito está vacío.');
+    await syncCatalog();
+    const checkoutCart = await readCart(db, user.id);
+    if (!checkoutCart.length) throw new Error('El carrito está vacío.');
+    const unavailable = checkoutCart.find((item) => item.quantity > item.stock);
+    if (unavailable) {
+      throw new Error(`Solo hay ${unavailable.stock} unidades de ${unavailable.name}; ajusta la cantidad del carrito.`);
+    }
     const id = Crypto.randomUUID();
     const deviceId = await getDeviceId(db);
-    const items: OrderItem[] = cart.map((item) => ({
+    const items: OrderItem[] = checkoutCart.map((item) => ({
       productId: item.id,
       name: item.name,
       quantity: item.quantity,
@@ -358,10 +411,9 @@ export function StoreProvider({ children }: PropsWithChildren) {
           item.imageUrl,
         );
       }
-      await db.runAsync('DELETE FROM cart WHERE owner_user_id = ?', user.id);
     });
     await refresh();
-    if (online) await syncOrder(id);
+    await syncOrder(id);
     return id;
   };
 

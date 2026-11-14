@@ -8,6 +8,7 @@ const escapeHtml = (value: string) => value.replace(/[&<>"']/g, (char) => ({
 }[char] ?? char));
 
 export async function shareInvoice(order: StoreOrder) {
+  const invoiceNumber = `FAC-${order.id.toUpperCase()}`;
   const rows = order.items.map((item) => `
     <tr><td>${escapeHtml(item.name)}<small> ${escapeHtml(item.productId)}</small></td>
     <td>${item.quantity}</td><td>${money(item.priceCents)}</td><td>${money(item.priceCents * item.quantity)}</td></tr>`).join('');
@@ -16,8 +17,8 @@ export async function shareInvoice(order: StoreOrder) {
     .tag{color:#d71920;font-weight:bold}table{width:100%;border-collapse:collapse;margin-top:24px}
     th,td{text-align:left;padding:12px 8px;border-bottom:1px solid #ddd}th{font-size:12px;text-transform:uppercase}
     .total{text-align:right;font-size:20px;font-weight:bold;margin-top:24px}
-  </style><body><p class="tag">LEGO</p><h1>Factura de compra</h1>
-    <p>Pedido: ${escapeHtml(order.id)}<br>Fecha: ${escapeHtml(new Date(order.createdAt).toLocaleString('es-MX'))}</p>
+  </style><body><p class="tag">LEGO-Expo</p><h1>Factura de compra</h1>
+    <p>Factura: ${escapeHtml(invoiceNumber)}<br>Pedido: ${escapeHtml(order.id)}<br>Fecha: ${escapeHtml(new Date(order.createdAt).toLocaleString('es-MX'))}</p>
     <p><b>${escapeHtml(order.customer.name)}</b><br>${escapeHtml(order.customer.email)}<br>${escapeHtml(order.customer.address)}</p>
     <table><thead><tr><th>Producto</th><th>Cant.</th><th>Precio</th><th>Importe</th></tr></thead><tbody>${rows}</tbody></table>
     <p class="total">Total: ${money(order.totalCents)}</p><p>Pago simulado · Gracias por tu compra.</p></body></html>`;
@@ -27,9 +28,8 @@ export async function shareInvoice(order: StoreOrder) {
     return;
   }
   const { uri } = await Print.printToFileAsync({ html });
-  if (await Sharing.isAvailableAsync()) {
-    await Sharing.shareAsync(uri, { mimeType: 'application/pdf', dialogTitle: 'Factura LEGO' });
-  }
+  if (!await Sharing.isAvailableAsync()) throw new Error('La opción para compartir archivos no está disponible en este dispositivo.');
+  await Sharing.shareAsync(uri, { mimeType: 'application/pdf', dialogTitle: 'Factura LEGO' });
 }
 
 function money(cents: number) {

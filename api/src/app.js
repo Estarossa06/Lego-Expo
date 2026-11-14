@@ -7,6 +7,7 @@ import { requireRole } from './authorization.js';
 import { getJwtSecret, validateLoginInput, validateRegistrationInput } from './authValidation.js';
 import { describeDatabaseError, getPool } from './db.js';
 import { isValidUUID, validateInventory, validateOrder } from './orderValidation.js';
+import { sanitizeProduct } from './productSerialization.js';
 
 const app = express();
 const allowedOrigins = process.env.CORS_ORIGIN?.split(',').map((origin) => origin.trim());
@@ -24,22 +25,6 @@ function sanitizeUser(row) {
     role: row.role,
     isActive: row.is_active,
     createdAt: row.created_at,
-  };
-}
-
-function sanitizeProduct(row) {
-  if (!row) return null;
-  return {
-    id: row.id,
-    name: row.name,
-    description: row.description,
-    priceCents: Number(row.price_cents),
-    stock: Number(row.stock),
-    imageUrl: row.image_url,
-    category: row.category,
-    isActive: row.is_active,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
   };
 }
 

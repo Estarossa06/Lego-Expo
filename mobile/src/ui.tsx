@@ -288,12 +288,22 @@ export function ActionButton({ label, onPress, secondary = false, disabled = fal
   );
 }
 
-export function QuantityControl({ quantity, onChange }: { quantity: number; onChange: (value: number) => void }) {
+export function QuantityControl({ quantity, onChange, max = 99 }: { quantity: number; onChange: (value: number) => void; max?: number }) {
+  const atMaximum = quantity >= max;
   return (
     <View style={styles.quantity}>
       <Pressable accessibilityRole="button" accessibilityLabel="Reducir cantidad" onPress={() => onChange(quantity - 1)} style={styles.quantityButton}><Text style={styles.quantitySymbol}>−</Text></Pressable>
       <Text style={styles.quantityValue}>{quantity}</Text>
-      <Pressable accessibilityRole="button" accessibilityLabel="Aumentar cantidad" onPress={() => onChange(quantity + 1)} style={styles.quantityButton}><Text style={styles.quantitySymbol}>+</Text></Pressable>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Aumentar cantidad"
+        accessibilityState={{ disabled: atMaximum }}
+        disabled={atMaximum}
+        onPress={() => onChange(quantity + 1)}
+        style={[styles.quantityButton, atMaximum && styles.quantityButtonDisabled]}
+      >
+        <Text style={styles.quantitySymbol}>+</Text>
+      </Pressable>
     </View>
   );
 }
@@ -430,6 +440,7 @@ const styles = StyleSheet.create({
   buttonTextSecondary: { color: colors.ink },
   quantity: { flexDirection: 'row', alignItems: 'center', gap: 7, borderRadius: 8, borderWidth: 1, borderColor: colors.line, padding: 3, backgroundColor: colors.paper },
   quantityButton: { width: 36, height: 36, borderRadius: 6, backgroundColor: colors.canvas, alignItems: 'center', justifyContent: 'center' },
+  quantityButtonDisabled: { opacity: 0.4 },
   quantitySymbol: { color: colors.ink, fontSize: 20, fontWeight: '700' },
   quantityValue: { minWidth: 22, textAlign: 'center', color: colors.ink, fontWeight: '900' },
   field: { gap: 7 },

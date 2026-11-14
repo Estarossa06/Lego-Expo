@@ -4,7 +4,7 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MIN_PASSWORD_LENGTH = 8;
 const MAX_BCRYPT_PASSWORD_BYTES = 72;
 const MIN_ADMIN_INVITATION_LENGTH = 32;
-const DEVELOPMENT_ADMIN_INVITATION_CODE = '1234';
+const DEVELOPMENT_ADMIN_INVITATION_CODE = '12345678';
 
 function matchesAdminInvitation(candidate, environment) {
   const configuredCode = typeof environment.ADMIN_REGISTRATION_CODE === 'string'
