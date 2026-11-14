@@ -362,7 +362,11 @@ export function StoreProvider({ children }: PropsWithChildren) {
 
   const placeOrder = async (customer: Customer) => {
     if (!user) throw new Error('Inicia sesión antes de confirmar una compra.');
-    await syncCatalog();
+    try {
+      await syncCatalog();
+    } catch {
+      // The order can be saved locally and validated when the server is available again.
+    }
     const checkoutCart = await readCart(db, user.id);
     if (!checkoutCart.length) throw new Error('El carrito está vacío.');
     const unavailable = checkoutCart.find((item) => item.quantity > item.stock);

@@ -31,7 +31,7 @@ export default function HomeScreen() {
         <>
           <SectionTitle>{`Resultados (${matchingProducts.length})`}</SectionTitle>
           {loading && !products.length ? <LoadingState /> : matchingProducts.length ? (
-            <ProductGrid products={matchingProducts} onProductPress={openProduct} onAdd={addToCart} />
+            <ProductGrid products={matchingProducts} cart={cart} onProductPress={openProduct} onAdd={addToCart} />
           ) : <EmptyState title="No encontramos sets" detail="Prueba con otro nombre, número de set o categoría." />}
           <ActionButton label="Ver catálogo completo" secondary onPress={() => router.push('/(tabs)/catalog')} />
         </>
@@ -61,14 +61,14 @@ export default function HomeScreen() {
           <View style={styles.section}>
             <SectionTitle action={<Pressable accessibilityRole="button" onPress={() => router.push('/(tabs)/catalog')}><Text style={styles.linkText}>Ver todos</Text></Pressable>}>Selección para explorar</SectionTitle>
             {loading && !products.length ? <LoadingState /> : featured.length ? (
-              <ProductGrid products={featured} onProductPress={openProduct} onAdd={addToCart} />
+              <ProductGrid products={featured} cart={cart} onProductPress={openProduct} onAdd={addToCart} />
             ) : <EmptyState title="Catálogo vacío" detail="Cuando haya productos disponibles aparecerán aquí." />}
           </View>
 
           {explore.length ? (
             <View style={styles.section}>
               <SectionTitle action={<Pressable accessibilityRole="button" onPress={() => router.push('/(tabs)/catalog')}><Text style={styles.linkText}>Descubrir sets</Text></Pressable>}>Más para descubrir</SectionTitle>
-              <ProductGrid products={explore} onProductPress={openProduct} onAdd={addToCart} />
+              <ProductGrid products={explore} cart={cart} onProductPress={openProduct} onAdd={addToCart} />
             </View>
           ) : null}
 

@@ -5,7 +5,7 @@ import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, Text
 import type { ColorValue, ViewStyle } from 'react-native';
 import { useEffect, useRef, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import type { Product, StoreOrder } from './types';
+import type { CartItem, Product, StoreOrder } from './types';
 
 export const colors = {
   ink: '#202124',
@@ -130,8 +130,9 @@ export function StoreHeader({ cartCount, onCartPress, caption }: { cartCount: nu
   );
 }
 
-export function ProductGrid({ products, onProductPress, onAdd, limit }: {
+export function ProductGrid({ products, cart, onProductPress, onAdd, limit }: {
   products: Product[];
+  cart: CartItem[];
   onProductPress: (product: Product) => void;
   onAdd: (product: Product) => Promise<void>;
   limit?: number;
@@ -150,6 +151,7 @@ export function ProductGrid({ products, onProductPress, onAdd, limit }: {
         <ProductCard
           key={product.id}
           product={product}
+          quantityInCart={cart.find((item) => item.id === product.id)?.quantity ?? 0}
           onPress={() => onProductPress(product)}
           onAdd={() => onAdd(product)}
           style={{ width: cardWidth }}
@@ -181,8 +183,9 @@ export function StoreNote({ children }: PropsWithChildren) {
   );
 }
 
-export function ProductCard({ product, onPress, onAdd, compact = false, style }: {
+export function ProductCard({ product, quantityInCart, onPress, onAdd, compact = false, style }: {
   product: Product;
+  quantityInCart: number;
   onPress: () => void;
   onAdd: () => Promise<void>;
   compact?: boolean;
@@ -192,13 +195,14 @@ export function ProductCard({ product, onPress, onAdd, compact = false, style }:
   const [added, setAdded] = useState(false);
   const [addError, setAddError] = useState('');
   const feedbackTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const remainingStock = Math.max(0, product.stock - quantityInCart);
 
   useEffect(() => () => {
     if (feedbackTimeout.current) clearTimeout(feedbackTimeout.current);
   }, []);
 
   const addProduct = async () => {
-    if (adding || product.stock < 1) return;
+    if (adding || remainingStock < 1) return;
     if (feedbackTimeout.current) clearTimeout(feedbackTimeout.current);
     setAdding(true);
     setAdded(false);
@@ -233,19 +237,19 @@ export function ProductCard({ product, onPress, onAdd, compact = false, style }:
           <View style={styles.productFooter}>
             <View style={styles.productPriceStock}>
               <Money cents={product.priceCents} />
-              <Text style={[styles.stock, product.stock === 0 && styles.outOfStock]}>
-                {product.stock > 0 ? `${product.stock} disponibles` : 'Agotado'}
+              <Text style={[styles.stock, remainingStock === 0 && styles.outOfStock]}>
+                {remainingStock > 0 ? `${remainingStock} disponibles` : product.stock > 0 ? 'Todo en tu carrito' : 'Agotado'}
               </Text>
             </View>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={product.stock < 1 ? `${product.name} agotado` : `Agregar ${product.name} al carrito`}
-              accessibilityState={{ disabled: product.stock < 1 || adding, busy: adding }}
-              disabled={product.stock < 1 || adding}
+              accessibilityLabel={remainingStock < 1 ? `${product.name} sin unidades disponibles` : `Agregar ${product.name} al carrito`}
+              accessibilityState={{ disabled: remainingStock < 1 || adding, busy: adding }}
+              disabled={remainingStock < 1 || adding}
               onPress={() => void addProduct()}
               style={({ pressed }) => [
                 styles.addToCartButton,
-                (product.stock < 1 || adding) && styles.addToCartButtonDisabled,
+                (remainingStock < 1 || adding) && styles.addToCartButtonDisabled,
                 added && styles.addToCartButtonAdded,
                 pressed && styles.productPressed,
               ]}

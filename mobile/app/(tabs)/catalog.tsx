@@ -68,6 +68,7 @@ export default function CatalogScreen() {
       {loading && !products.length ? <LoadingState /> : filtered.length ? (
         <ProductGrid
           products={filtered}
+          cart={cart}
           onProductPress={(product) => router.push({ pathname: '/product/[id]', params: { id: product.id } })}
           onAdd={addToCart}
         />

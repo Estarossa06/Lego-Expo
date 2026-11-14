@@ -52,10 +52,10 @@ export default function ProductScreen() {
         <Text style={styles.name}>{product.name}</Text>
         <View style={styles.priceAvailability}>
           <Money cents={product.priceCents} large />
-          <View style={[styles.stockPill, product.stock === 0 && styles.stockPillEmpty]}>
-            <View style={[styles.stockDot, product.stock === 0 && styles.stockDotEmpty]} />
-            <Text style={[styles.stockText, product.stock === 0 && styles.stockTextEmpty]}>
-              {product.stock ? `${product.stock} disponibles` : 'Agotado'}
+          <View style={[styles.stockPill, remainingStock === 0 && styles.stockPillEmpty]}>
+            <View style={[styles.stockDot, remainingStock === 0 && styles.stockDotEmpty]} />
+            <Text style={[styles.stockText, remainingStock === 0 && styles.stockTextEmpty]}>
+              {remainingStock > 0 ? `${remainingStock} disponibles` : product.stock > 0 ? 'Todo en tu carrito' : 'Agotado'}
             </Text>
           </View>
         </View>
@@ -102,6 +102,7 @@ export default function ProductScreen() {
           <SectionTitle>Más de {product.category}</SectionTitle>
           <ProductGrid
             products={related}
+            cart={cart}
             onProductPress={(item) => router.push({ pathname: '/product/[id]', params: { id: item.id } })}
             onAdd={addToCart}
           />
