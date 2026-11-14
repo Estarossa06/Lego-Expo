@@ -10,10 +10,10 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: colors.blue,
+        tabBarActiveTintColor: colors.red,
         tabBarInactiveTintColor: colors.muted,
-        tabBarStyle: { height: 68, paddingTop: 8, paddingBottom: 9, backgroundColor: colors.paper, borderTopColor: colors.line },
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '800' },
+        tabBarStyle: { height: 70, paddingTop: 8, paddingBottom: 9, backgroundColor: colors.paper, borderTopColor: colors.line, elevation: 8, shadowColor: '#17191f', shadowOffset: { width: 0, height: -2 }, shadowOpacity: 0.06, shadowRadius: 8 },
+        tabBarLabelStyle: { fontSize: 10, fontWeight: '800' },
         tabBarBadgeStyle: { backgroundColor: colors.red, color: colors.paper, fontSize: 10, fontWeight: '900' },
       }}
     >

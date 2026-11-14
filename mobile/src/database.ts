@@ -1,5 +1,6 @@
 import * as Crypto from 'expo-crypto';
 import type { SQLiteDatabase } from 'expo-sqlite';
+import { Platform } from 'react-native';
 import { catalogSeed } from './catalogSeed';
 import type { CartItem, OrderItem, Product, StoreOrder } from './types';
 
@@ -32,6 +33,7 @@ export async function initializeDatabase(db: SQLiteDatabase) {
     CREATE TABLE IF NOT EXISTS orders (
       id TEXT PRIMARY KEY NOT NULL,
       device_id TEXT NOT NULL,
+      owner_user_id TEXT,
       status TEXT NOT NULL CHECK(status IN ('pending_sync', 'processing', 'completed', 'rejected')),
       created_at TEXT NOT NULL,
       customer_json TEXT NOT NULL,
@@ -54,6 +56,11 @@ export async function initializeDatabase(db: SQLiteDatabase) {
       value TEXT NOT NULL
     );
   `);
+
+  const orderColumns = await db.getAllAsync<{ name: string }>('PRAGMA table_info(orders)');
+  if (!orderColumns.some((column) => column.name === 'owner_user_id')) {
+    await db.execAsync('ALTER TABLE orders ADD COLUMN owner_user_id TEXT');
+  }
 
   await db.runAsync("UPDATE orders SET status = 'pending_sync' WHERE status = 'processing'");
   const count = await db.getFirstAsync<{ count: number }>('SELECT COUNT(*) AS count FROM products');
@@ -107,8 +114,12 @@ export async function readCart(db: SQLiteDatabase) {
   );
 }
 
-export async function readOrders(db: SQLiteDatabase): Promise<StoreOrder[]> {
-  const orders = await db.getAllAsync<OrderRow>('SELECT * FROM orders ORDER BY created_at DESC');
+export async function readOrders(db: SQLiteDatabase, ownerUserId: string | null): Promise<StoreOrder[]> {
+  if (!ownerUserId) return [];
+  const orders = await db.getAllAsync<OrderRow>(
+    'SELECT * FROM orders WHERE owner_user_id = ? ORDER BY created_at DESC',
+    ownerUserId,
+  );
   return Promise.all(
     orders.map(async (order) => {
       const items = await db.getAllAsync<OrderItem>(

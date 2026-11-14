@@ -1,4 +1,5 @@
 export type OrderStatus = 'pending_sync' | 'processing' | 'completed' | 'rejected';
+export type UserRole = 'user' | 'admin';
 
 export type Product = {
   id: string;
@@ -8,6 +9,7 @@ export type Product = {
   stock: number;
   imageUrl: string;
   category: string;
+  isActive?: boolean;
 };
 
 export type CartItem = Product & { quantity: number };
@@ -17,6 +19,16 @@ export type Customer = {
   phone: string;
   email: string;
   address: string;
+};
+
+export type User = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: UserRole;
+  isActive: boolean;
+  createdAt: string;
 };
 
 export type OrderItem = {
@@ -43,4 +55,5 @@ export type StoreOrder = {
   subtotalCents: number;
   totalCents: number;
   rejectionReason: string | null;
+  userId?: string | null;
 };

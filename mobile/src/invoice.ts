@@ -16,7 +16,7 @@ export async function shareInvoice(order: StoreOrder) {
     .tag{color:#d71920;font-weight:bold}table{width:100%;border-collapse:collapse;margin-top:24px}
     th,td{text-align:left;padding:12px 8px;border-bottom:1px solid #ddd}th{font-size:12px;text-transform:uppercase}
     .total{text-align:right;font-size:20px;font-weight:bold;margin-top:24px}
-  </style><body><p class="tag">LEGO STORE</p><h1>Factura de compra</h1>
+  </style><body><p class="tag">LEGO</p><h1>Factura de compra</h1>
     <p>Pedido: ${escapeHtml(order.id)}<br>Fecha: ${escapeHtml(new Date(order.createdAt).toLocaleString('es-MX'))}</p>
     <p><b>${escapeHtml(order.customer.name)}</b><br>${escapeHtml(order.customer.email)}<br>${escapeHtml(order.customer.address)}</p>
     <table><thead><tr><th>Producto</th><th>Cant.</th><th>Precio</th><th>Importe</th></tr></thead><tbody>${rows}</tbody></table>
@@ -28,7 +28,7 @@ export async function shareInvoice(order: StoreOrder) {
   }
   const { uri } = await Print.printToFileAsync({ html });
   if (await Sharing.isAvailableAsync()) {
-    await Sharing.shareAsync(uri, { mimeType: 'application/pdf', dialogTitle: 'Factura LEGO Store' });
+    await Sharing.shareAsync(uri, { mimeType: 'application/pdf', dialogTitle: 'Factura LEGO' });
   }
 }
 
