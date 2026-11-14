@@ -110,6 +110,8 @@ Este bootstrap crea el administrador solo si el correo aún no existe y nunca pr
 - Expo SecureStore conserva el token en iOS/Android; el navegador usa su alternativa de almacenamiento web. Nunca se persiste la contraseña.
 - El backend carga el rol activo desde PostgreSQL y protege pedidos y endpoints de administración; los claims del cliente no conceden permisos.
 - El backend rechaza la asignación de `admin` sin invitación válida; en desarrollo/pruebas el código es `1234`, mientras que producción exige un código aleatorio de 32 caracteres o más. El panel administrativo verifica el rol y la API aplica autorización en cada endpoint.
+- La pestaña **Cuenta** permite cerrar sesión e ingresar con otra cuenta.
+- Cada cuenta conserva su propio carrito local, separado por el identificador de usuario. Los carritos antiguos sin propietario no se asignan a una cuenta; el inventario sigue siendo global en PostgreSQL.
 
 ## Inventario y compras
 

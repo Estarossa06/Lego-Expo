@@ -24,7 +24,7 @@ export default function TabLayout() {
         tabBarIcon: ({ color }) => <Icon name="cart" color={color ?? colors.ink} />,
         tabBarBadge: itemCount ? (itemCount > 99 ? '99+' : itemCount) : undefined,
       }} />
-      <Tabs.Screen name="orders" options={{ title: 'Pedidos', tabBarIcon: ({ color }) => <Icon name="orders" color={color ?? colors.ink} /> }} />
+      <Tabs.Screen name="orders" options={{ title: 'Cuenta', tabBarIcon: ({ color }) => <Icon name="orders" color={color ?? colors.ink} /> }} />
     </Tabs>
   );
 }

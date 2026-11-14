@@ -15,8 +15,8 @@ export default function OrdersScreen() {
     <Screen>
       <StoreHeader cartCount={itemCount} onCartPress={() => router.push('/(tabs)/cart')} caption="Tus compras" />
       <View style={styles.heading}>
-        <Text style={styles.title}>Pedidos</Text>
-        <Text style={styles.subtitle}>Consulta el estado de tus compras.</Text>
+        <Text style={styles.title}>Cuenta y pedidos</Text>
+        <Text style={styles.subtitle}>Consulta tus compras o cierra sesión para ingresar con otra cuenta.</Text>
       </View>
       <Text style={styles.accountLabel}>Sesión iniciada como {user?.email}</Text>
       {isAdmin ? <ActionButton label="Abrir panel administrativo" onPress={() => router.push('/admin')} /> : null}

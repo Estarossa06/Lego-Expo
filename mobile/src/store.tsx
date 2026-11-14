@@ -154,7 +154,7 @@ export function StoreProvider({ children }: PropsWithChildren) {
   const refresh = useCallback(async (ownerUserId: string | null = user?.id ?? null) => {
     const [nextProducts, nextCart, nextOrders] = await Promise.all([
       readProducts(db),
-      readCart(db),
+      readCart(db, ownerUserId),
       readOrders(db, ownerUserId),
     ]);
     setProducts(nextProducts);
@@ -280,10 +280,12 @@ export function StoreProvider({ children }: PropsWithChildren) {
   }, [db, refresh, syncWhenOnline]);
 
   const addToCart = async (product: Product, quantity = 1) => {
+    if (!user) throw new Error('Inicia sesión antes de agregar productos al carrito.');
     if (product.stock < 1) throw new Error('Este producto no tiene existencias.');
     await db.runAsync(
-      `INSERT INTO cart (product_id, quantity) VALUES (?, ?)
-       ON CONFLICT(product_id) DO UPDATE SET quantity = MIN(99, quantity + excluded.quantity)`,
+      `INSERT INTO cart (owner_user_id, product_id, quantity) VALUES (?, ?, ?)
+       ON CONFLICT(owner_user_id, product_id) DO UPDATE SET quantity = MIN(99, quantity + excluded.quantity)`,
+      user.id,
       product.id,
       quantity,
     );
@@ -291,16 +293,23 @@ export function StoreProvider({ children }: PropsWithChildren) {
   };
 
   const setCartQuantity = async (productId: string, quantity: number) => {
+    if (!user) throw new Error('Inicia sesión para modificar tu carrito.');
     if (quantity <= 0) {
       await removeFromCart(productId);
       return;
     }
-    await db.runAsync('UPDATE cart SET quantity = MIN(99, ?) WHERE product_id = ?', quantity, productId);
+    await db.runAsync(
+      'UPDATE cart SET quantity = MIN(99, ?) WHERE owner_user_id = ? AND product_id = ?',
+      quantity,
+      user.id,
+      productId,
+    );
     await refresh();
   };
 
   const removeFromCart = async (productId: string) => {
-    await db.runAsync('DELETE FROM cart WHERE product_id = ?', productId);
+    if (!user) throw new Error('Inicia sesión para modificar tu carrito.');
+    await db.runAsync('DELETE FROM cart WHERE owner_user_id = ? AND product_id = ?', user.id, productId);
     await refresh();
   };
 
@@ -349,7 +358,7 @@ export function StoreProvider({ children }: PropsWithChildren) {
           item.imageUrl,
         );
       }
-      await db.runAsync('DELETE FROM cart');
+      await db.runAsync('DELETE FROM cart WHERE owner_user_id = ?', user.id);
     });
     await refresh();
     if (online) await syncOrder(id);

@@ -27,8 +27,10 @@ export async function initializeDatabase(db: SQLiteDatabase) {
       category TEXT NOT NULL
     );
     CREATE TABLE IF NOT EXISTS cart (
-      product_id TEXT PRIMARY KEY NOT NULL REFERENCES products(id),
-      quantity INTEGER NOT NULL CHECK(quantity BETWEEN 1 AND 99)
+      owner_user_id TEXT NOT NULL,
+      product_id TEXT NOT NULL REFERENCES products(id),
+      quantity INTEGER NOT NULL CHECK(quantity BETWEEN 1 AND 99),
+      PRIMARY KEY(owner_user_id, product_id)
     );
     CREATE TABLE IF NOT EXISTS orders (
       id TEXT PRIMARY KEY NOT NULL,
@@ -60,6 +62,21 @@ export async function initializeDatabase(db: SQLiteDatabase) {
   const orderColumns = await db.getAllAsync<{ name: string }>('PRAGMA table_info(orders)');
   if (!orderColumns.some((column) => column.name === 'owner_user_id')) {
     await db.execAsync('ALTER TABLE orders ADD COLUMN owner_user_id TEXT');
+  }
+
+  const cartColumns = await db.getAllAsync<{ name: string }>('PRAGMA table_info(cart)');
+  if (!cartColumns.some((column) => column.name === 'owner_user_id')) {
+    await db.withTransactionAsync(async () => {
+      await db.execAsync('ALTER TABLE cart RENAME TO cart_unassigned_legacy');
+      await db.execAsync(`
+        CREATE TABLE cart (
+          owner_user_id TEXT NOT NULL,
+          product_id TEXT NOT NULL REFERENCES products(id),
+          quantity INTEGER NOT NULL CHECK(quantity BETWEEN 1 AND 99),
+          PRIMARY KEY(owner_user_id, product_id)
+        )
+      `);
+    });
   }
 
   await db.runAsync("UPDATE orders SET status = 'pending_sync' WHERE status = 'processing'");
@@ -106,11 +123,14 @@ export async function readProducts(db: SQLiteDatabase) {
   );
 }
 
-export async function readCart(db: SQLiteDatabase) {
+export async function readCart(db: SQLiteDatabase, ownerUserId: string | null) {
+  if (!ownerUserId) return [];
   return db.getAllAsync<CartItem>(
     `SELECT p.id, p.name, p.description, p.price_cents AS priceCents, p.stock,
       p.image_url AS imageUrl, p.category, c.quantity
-     FROM cart c JOIN products p ON p.id = c.product_id ORDER BY p.name`,
+     FROM cart c JOIN products p ON p.id = c.product_id
+     WHERE c.owner_user_id = ? ORDER BY p.name`,
+    ownerUserId,
   );
 }
 
