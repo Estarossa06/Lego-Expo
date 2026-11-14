@@ -46,7 +46,6 @@ CREATE TABLE IF NOT EXISTS orders (
 );
 
 CREATE INDEX IF NOT EXISTS orders_device_created_idx ON orders (device_id, created_at DESC);
-CREATE INDEX IF NOT EXISTS orders_user_created_idx ON orders (user_id, created_at DESC);
 
 CREATE TABLE IF NOT EXISTS order_items (
   order_id UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
@@ -62,5 +61,7 @@ ALTER TABLE products ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;
 ALTER TABLE products ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();
 ALTER TABLE products ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES users(id);
+
+CREATE INDEX IF NOT EXISTS orders_user_created_idx ON orders (user_id, created_at DESC);
 
 UPDATE products SET updated_at = NOW() WHERE updated_at IS NULL;
